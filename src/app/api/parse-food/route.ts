@@ -13,21 +13,23 @@ RULES:
 7. Round calories to whole numbers. Round protein, carbs, and fat to 1 decimal place.
 8. Return ONLY valid JSON — no markdown, no explanation, no extra text.
 
-RESPONSE FORMAT (strict JSON array):
-[
-  {
-    "name": "Display name of the food",
-    "quantity": "Human-readable quantity string (e.g. '2 large eggs', '1 cup cooked')",
-    "macros": {
-      "calories": 144,
-      "protein": 12.0,
-      "carbs": 0.8,
-      "fat": 10.0
+RESPONSE FORMAT (strict JSON object with an "entries" key):
+{
+  "entries": [
+    {
+      "name": "Display name of the food",
+      "quantity": "Human-readable quantity string (e.g. '2 large eggs', '1 cup cooked')",
+      "macros": {
+        "calories": 144,
+        "protein": 12.0,
+        "carbs": 0.8,
+        "fat": 10.0
+      }
     }
-  }
-]
+  ]
+}
 
-If the input contains no recognizable food items, return an empty array: []`;
+If the input contains no recognizable food items, return: {"entries": []}`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,17 +71,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse the response — it may be a direct array or wrapped in an object
-    let parsed = JSON.parse(content);
-    if (!Array.isArray(parsed)) {
-      // Handle {"items": [...]} or {"foods": [...]} wrappers
-      const values = Object.values(parsed);
-      const arr = values.find((v) => Array.isArray(v));
-      parsed = arr || [];
-    }
+    // Parse the response — expect {"entries": [...]} format
+    const parsed = JSON.parse(content);
+    const items = Array.isArray(parsed.entries) ? parsed.entries : [];
 
     // Validate and sanitize each entry
-    const entries = (parsed as Record<string, unknown>[]).map(
+    const entries = (items as Record<string, unknown>[]).map(
       (item: Record<string, unknown>) => {
         const macros = item.macros as Record<string, unknown> | undefined;
         return {
