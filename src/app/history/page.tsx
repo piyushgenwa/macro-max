@@ -34,7 +34,10 @@ export default function HistoryPage() {
   if (!mounted || !profile || !targets) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-text-muted">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          <span className="text-sm text-text-muted">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -58,54 +61,120 @@ export default function HistoryPage() {
     }
   }
 
+  const statCards = [
+    {
+      value: streak,
+      label: "Day Streak",
+      color: "var(--color-accent-light)",
+      bgGlow: "rgba(99, 102, 241, 0.08)",
+      borderGlow: "rgba(99, 102, 241, 0.15)",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+      ),
+    },
+    {
+      value: avgCalories,
+      label: "Avg Cal/Day",
+      color: "var(--color-ring-cal)",
+      bgGlow: "rgba(249, 115, 22, 0.08)",
+      borderGlow: "rgba(249, 115, 22, 0.15)",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 20V10" />
+          <path d="M18 20V4" />
+          <path d="M6 20v-4" />
+        </svg>
+      ),
+    },
+    {
+      value: `${avgProtein}g`,
+      label: "Avg Protein",
+      color: "var(--color-ring-protein)",
+      bgGlow: "rgba(6, 182, 212, 0.08)",
+      borderGlow: "rgba(6, 182, 212, 0.15)",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
-    <div className="min-h-screen pb-20">
-      <div className="max-w-lg mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold mb-6">History</h1>
+    <div className="min-h-screen pb-24">
+      <div className="relative max-w-lg mx-auto px-4 pt-8 pb-6">
+        <h1 className="text-2xl font-bold tracking-tight mb-6 animate-fade-in-up">
+          <span className="gradient-text">History</span>
+        </h1>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-accent">{streak}</div>
-            <div className="text-xs text-text-muted">Day Streak</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-ring-cal">{avgCalories}</div>
-            <div className="text-xs text-text-muted">Avg Cal/Day</div>
-          </div>
-          <div className="bg-surface border border-border rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-ring-protein">{avgProtein}g</div>
-            <div className="text-xs text-text-muted">Avg Protein</div>
-          </div>
+        <div className="grid grid-cols-3 gap-3 mb-6 stagger-children">
+          {statCards.map((stat) => (
+            <div
+              key={stat.label}
+              className="relative glass rounded-2xl p-4 text-center overflow-hidden"
+              style={{
+                boxShadow: `0 0 30px -10px ${stat.bgGlow}`,
+              }}
+            >
+              {/* Subtle top glow */}
+              <div
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-[1px]"
+                style={{ background: `linear-gradient(90deg, transparent, ${stat.borderGlow}, transparent)` }}
+              />
+              <div className="flex justify-center mb-2" style={{ color: stat.color }}>
+                {stat.icon}
+              </div>
+              <div className="text-2xl font-bold tabular-nums animate-count" style={{ color: stat.color }}>
+                {stat.value}
+              </div>
+              <div className="text-[10px] text-text-muted mt-1 font-medium tracking-wide uppercase">
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Week chart */}
-        <div className="bg-surface border border-border rounded-2xl p-4 mb-6">
-          <h2 className="text-sm font-medium text-text-muted mb-4">This Week</h2>
+        <div className="glass rounded-2xl p-5 mb-6 animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs font-semibold text-text-muted tracking-wider uppercase">This Week</h2>
+            <div className="flex items-center gap-2 text-[10px] text-text-muted">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-[2px] rounded-full bg-white/[0.08]" />
+                Target
+              </span>
+            </div>
+          </div>
           <WeekChart logs={weekLogs} targets={targets} />
         </div>
 
         {/* Day-by-day list */}
-        <div>
-          <h2 className="text-sm font-medium text-text-muted mb-3">Recent Days</h2>
-          <div className="space-y-2">
+        <div className="animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+          <h2 className="text-xs font-semibold text-text-muted mb-3 tracking-wider uppercase">Recent Days</h2>
+          <div className="space-y-2 stagger-children">
             {[...weekLogs].reverse().map((log) => {
               const hasData = log.entries.length > 0;
               return (
                 <div
                   key={log.date}
-                  className="bg-surface-2 border border-border rounded-xl p-4"
+                  className="glass rounded-xl p-4 transition-all duration-300 hover:bg-white/[0.04]"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="text-sm font-medium">{formatDate(log.date)}</div>
-                      <div className="text-xs text-text-muted">
+                      <div className="text-[11px] text-text-muted mt-0.5">
                         {hasData ? `${log.entries.length} items logged` : "No data"}
                       </div>
                     </div>
                     {hasData && (
                       <div className="text-right">
-                        <div className="text-sm font-bold text-ring-cal">{log.totals.calories} cal</div>
+                        <div className="text-sm font-bold tabular-nums" style={{ color: "var(--color-ring-cal)" }}>
+                          {log.totals.calories}
+                          <span className="text-[10px] font-normal text-text-muted ml-1">cal</span>
+                        </div>
                       </div>
                     )}
                   </div>
