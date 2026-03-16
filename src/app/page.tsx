@@ -17,33 +17,51 @@ export default function HomePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [dayLog, setDayLog] = useState<DayLog | null>(null);
   const [targets, setTargets] = useState<MacroTargets | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
-    const p = getProfile();
-    if (!p) {
-      router.push("/onboarding");
-      return;
+    let cancelled = false;
+
+    async function load() {
+      const p = await getProfile();
+      if (!p) {
+        router.push("/onboarding");
+        return;
+      }
+
+      const log = await getDayLog(todayStr());
+      if (cancelled) return;
+
+      setProfile(p);
+      setTargets(calculateTargets(p));
+      setDayLog(log);
+      setLoading(false);
     }
-    setProfile(p);
-    setTargets(calculateTargets(p));
-    setDayLog(getDayLog(todayStr()));
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
-  function handleAddEntries(entries: FoodEntry[]) {
+  async function handleAddEntries(entries: FoodEntry[]) {
     const date = todayStr();
-    entries.forEach((entry) => addFoodEntry(date, entry));
-    setDayLog(getDayLog(date));
+
+    for (const entry of entries) {
+      await addFoodEntry(date, entry);
+    }
+
+    setDayLog(await getDayLog(date));
   }
 
-  function handleRemoveEntry(id: string) {
+  async function handleRemoveEntry(id: string) {
     const date = todayStr();
-    removeFoodEntry(date, id);
-    setDayLog(getDayLog(date));
+    await removeFoodEntry(date, id);
+    setDayLog(await getDayLog(date));
   }
 
-  if (!mounted || !profile || !targets || !dayLog) {
+  if (loading || !profile || !targets || !dayLog) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

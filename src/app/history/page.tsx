@@ -16,22 +16,40 @@ export default function HistoryPage() {
   const [targets, setTargets] = useState<MacroTargets | null>(null);
   const [weekLogs, setWeekLogs] = useState<DayLog[]>([]);
   const [monthLogs, setMonthLogs] = useState<DayLog[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
-    const p = getProfile();
-    if (!p) {
-      router.push("/onboarding");
-      return;
+    let cancelled = false;
+
+    async function load() {
+      const p = await getProfile();
+      if (!p) {
+        router.push("/onboarding");
+        return;
+      }
+
+      const [recentWeekLogs, recentMonthLogs] = await Promise.all([
+        getRecentLogs(7),
+        getRecentLogs(30),
+      ]);
+
+      if (cancelled) return;
+
+      setProfile(p);
+      setTargets(calculateTargets(p));
+      setWeekLogs(recentWeekLogs);
+      setMonthLogs(recentMonthLogs);
+      setLoading(false);
     }
-    setProfile(p);
-    setTargets(calculateTargets(p));
-    setWeekLogs(getRecentLogs(7));
-    setMonthLogs(getRecentLogs(30));
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
-  if (!mounted || !profile || !targets) {
+  if (loading || !profile || !targets) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

@@ -31,6 +31,7 @@ const GOAL_ICONS: Record<string, React.ReactNode> = {
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("basics");
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -57,7 +58,7 @@ export default function OnboardingPage() {
     else if (step === "summary") setStep("goal");
   }
 
-  function finish() {
+  async function finish() {
     const profile: UserProfile = {
       name: form.name,
       age: parseInt(form.age),
@@ -68,7 +69,9 @@ export default function OnboardingPage() {
       goal: form.goal,
       onboardedAt: new Date().toISOString(),
     };
-    saveProfile(profile);
+
+    setSaving(true);
+    await saveProfile(profile);
     router.push("/");
   }
 
@@ -379,14 +382,15 @@ export default function OnboardingPage() {
             </button>
           ) : (
             <button
-              onClick={finish}
-              className="flex-1 py-3.5 rounded-xl text-sm font-semibold text-white transition-all duration-300 btn-press"
+              onClick={() => void finish()}
+              disabled={saving}
+              className="flex-1 py-3.5 rounded-xl text-sm font-semibold text-white transition-all duration-300 btn-press disabled:opacity-40"
               style={{
                 background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-light))",
                 boxShadow: "0 0 25px -5px rgba(99,102,241,0.4)",
               }}
             >
-              Get Started
+              {saving ? "Saving..." : "Get Started"}
             </button>
           )}
         </div>
